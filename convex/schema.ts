@@ -18,6 +18,14 @@ export default defineSchema({
   availableModels: defineTable({
     modelDescription: v.string(),
     modelName: v.string()
-  })
+  }),
+
+  userGeneratedImages: defineTable({
+    userId: v.string(),
+    storageId: v.optional(v.string()),
+    status: v.string(),
+    imageUrl: v.optional(v.string()),
+    prompt: v.string()
+  }).index("by_userId", ["userId"])
 });
 

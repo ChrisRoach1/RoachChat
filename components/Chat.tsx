@@ -5,7 +5,10 @@ import { Send, Bot } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { optimisticallySendMessage, useThreadMessages } from "@convex-dev/agent/react";
+import {
+  optimisticallySendMessage,
+  useThreadMessages,
+} from "@convex-dev/agent/react";
 import {
   Select,
   SelectContent,
@@ -13,13 +16,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { darcula } from 'react-syntax-highlighter/dist/esm/styles/prism';
-
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { darcula } from "react-syntax-highlighter/dist/esm/styles/prism";
+import ReactMarkdown from "react-markdown";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+} from "./ui/form";
 
 export default function Chat({ threadId }: { threadId: string }) {
+  const messageFormSchema = z.object({
+    message: z.string().min(1),
+  });
+
+  const form = useForm<z.infer<typeof messageFormSchema>>({
+    resolver: zodResolver(messageFormSchema),
+    defaultValues: {
+      message: "",
+    },
+  });
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [message, setMessage] = useState("");
   const [isThinking, setIsThinking] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string | undefined>("");
 
@@ -30,8 +52,12 @@ export default function Chat({ threadId }: { threadId: string }) {
   );
 
   const listAllAvailableModels = useQuery(api.chat.listAllAvailableModels);
-  const getThreadModelPreference = useQuery(api.chat.getThreadModelPreference, {threadId});
-  const updateThreadModelPreference = useMutation(api.chat.updateThreadModelPreference);
+  const getThreadModelPreference = useQuery(api.chat.getThreadModelPreference, {
+    threadId,
+  });
+  const updateThreadModelPreference = useMutation(
+    api.chat.updateThreadModelPreference,
+  );
   const sendMessage = useMutation(
     api.chat.streamMessageAsynchronously,
   ).withOptimisticUpdate(
@@ -53,26 +79,25 @@ export default function Chat({ threadId }: { threadId: string }) {
     }
   }, [messagesResult.results]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim()) return;
+  const handleSelectedModel = async (modelName: string) => {
+    if (modelName !== "") {
+      setSelectedModel(modelName);
+      await updateThreadModelPreference({ threadId, modelName });
+    }
+  };
+
+  async function sendMessageHandler(values: z.infer<typeof messageFormSchema>) {
+    if (!values.message.trim()) return;
 
     try {
-      setMessage("");
       setIsThinking(true);
-      await sendMessage({ threadId, prompt: message });
+      await sendMessage({ threadId, prompt: values.message });
     } catch (error) {
       setIsThinking(false);
       console.error("Failed to send message:", error);
     }
-  };
 
-  const handleSelectedModel = async (modelName: string) =>{
-    if(modelName !== ''){
-      setSelectedModel(modelName);
-      await updateThreadModelPreference({threadId , modelName});
-    }
-
+    form.reset();
   }
 
   const scrollToBottom = () => {
@@ -176,53 +201,66 @@ export default function Chat({ threadId }: { threadId: string }) {
       {/* Input */}
       <div className="border-t bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
         <div className="max-w-4xl mx-auto p-4">
-          <form onSubmit={handleSendMessage} className="flex gap-2">
-            {/* Model Selector */}
-            <div>
-              <Select value={selectedModel} onValueChange={(value) => handleSelectedModel(value)}>
-                <SelectTrigger className="w-[200px] h-12 bg-background/50 backdrop-blur-sm border-2 border-border hover:border-primary/50 transition-all duration-200 focus:ring-2 focus:ring-primary/20">
-                  <SelectValue placeholder="Select model" />
-                </SelectTrigger>
-                <SelectContent className="bg-background/95 backdrop-blur-sm">
-                  {listAllAvailableModels?.map((model) => (
-                    <SelectItem
-                      key={model.modelName}
-                      value={model.modelName}
-                      className="cursor-pointer hover:bg-muted/50 focus:bg-muted/50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex-shrink-0 w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
-                        <div className="flex flex-col text-left">
-                          <span className="font-medium text-sm">{model.modelDescription}</span>
-                        </div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Message Input */}
-            <div className="flex-1 relative">
-              <Input
-                value={message}
-                placeholder="Type your message..."
-                onChange={(e) => setMessage(e.target.value)}
-                className="pr-12 h-12 border-2 focus:border-primary/50 transition-colors"
-              />
-            </div>
-
-            {/* Send Button */}
-            <Button
-              type="submit"
-              size="icon"
-              className="h-12 w-12 rounded-full shrink-0"
-              disabled={!message.trim()}
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(sendMessageHandler)}
+              className="flex gap-2"
             >
-              <Send className="h-4 w-4" />
-              <span className="sr-only">Send message</span>
-            </Button>
-          </form>
+              {/* Model Selector */}
+              <div>
+                <Select
+                  value={selectedModel}
+                  onValueChange={(value) => handleSelectedModel(value)}
+                >
+                  <SelectTrigger className="w-[200px] h-12 bg-background/50 backdrop-blur-sm border-2 border-border hover:border-primary/50 transition-all duration-200 focus:ring-2 focus:ring-primary/20">
+                    <SelectValue placeholder="Select model" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background/95 backdrop-blur-sm">
+                    {listAllAvailableModels?.map((model) => (
+                      <SelectItem
+                        key={model.modelName}
+                        value={model.modelName}
+                        className="cursor-pointer hover:bg-muted/50 focus:bg-muted/50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex-shrink-0 w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                          <div className="flex flex-col text-left">
+                            <span className="font-medium text-sm">
+                              {model.modelDescription}
+                            </span>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex-1 relative">
+                <FormField
+                  control={form.control}
+                  name="message"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input placeholder="Type your message...." {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+              </div>
+
+              <Button
+                type="submit"
+                size="icon"
+                disabled={!form.formState.isValid}
+                className="h-12 w-12 rounded-full shrink-0">
+                <Send className="h-4 w-4" />
+                <span className="sr-only">Send message</span>
+              </Button>
+            </form>
+          </Form>
         </div>
       </div>
     </div>
@@ -306,20 +344,21 @@ function MessageContent({ text }: { text: string }) {
                   </div>
                 </div>
                 <div className="overflow-x-auto">
-                  <SyntaxHighlighter 
-                    language={part.language} 
-                    style={darcula} 
+                  <SyntaxHighlighter
+                    language={part.language}
+                    style={darcula}
                     customStyle={{
                       margin: 0,
-                      padding: '1rem',
-                      background: 'transparent',
-                      fontSize: '0.875rem',
-                      lineHeight: '1.5',
+                      padding: "1rem",
+                      background: "transparent",
+                      fontSize: "0.875rem",
+                      lineHeight: "1.5",
                     }}
                     codeTagProps={{
                       style: {
-                        fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
-                      }
+                        fontFamily:
+                          'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                      },
                     }}
                   >
                     {part.content.trim()}
@@ -330,9 +369,13 @@ function MessageContent({ text }: { text: string }) {
           );
         } else {
           return (
-            <div key={part.key} className="prose prose-sm max-w-none prose-neutral dark:prose-invert">
+            <div
+              key={part.key}
+              className="prose prose-sm max-w-none prose-neutral dark:prose-invert"
+            >
               <div className="whitespace-pre-wrap leading-relaxed">
-                {part.content}
+                {/* {part.content} */}
+                <ReactMarkdown>{part.content}</ReactMarkdown>
               </div>
             </div>
           );

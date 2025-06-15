@@ -221,3 +221,26 @@ export const updateThreadModelPreference = mutation({
 
   }
 })
+
+
+export const updateThreadTitle = mutation({
+  args:{
+    threadId: v.string(),
+    title: v.string()
+  },
+
+  handler: async(ctx, args) =>{
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
+      throw new Error("Not authenticated");
+    }
+
+    ctx.runMutation(components.agent.threads.updateThread, {
+      patch:{
+        title: args.title
+      },
+      threadId: args.threadId
+    });
+
+  }
+})
