@@ -85,7 +85,7 @@ function DroppableFolder({ folderId, folderName, threadCount, onDelete }: Droppa
   });
 
   return (
-    <div className="group">
+    <div className="group relative">
       <AccordionTrigger 
         className={`px-3 py-2 hover:bg-accent rounded-md transition-colors ${
           isOver ? 'bg-primary/10 border-2 border-primary border-dashed' : ''
@@ -99,17 +99,17 @@ function DroppableFolder({ folderId, folderName, threadCount, onDelete }: Droppa
             ({threadCount})
           </span>
         </div>
+        <button
+          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded transition-all ml-2"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(folderId);
+          }}
+          title="Delete folder"
+        >
+          <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+        </button>
       </AccordionTrigger>
-      <button
-        className="absolute right-8 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded transition-all z-10"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(folderId);
-        }}
-        title="Delete folder"
-      >
-        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-      </button>
     </div>
   );
 }
@@ -436,7 +436,7 @@ export function AppSidebar({ setCurrentThreadId, currentThreadId }: props) {
 
                   <Accordion type="multiple" className="w-full">
                     {folders?.map((folder) => (
-                      <AccordionItem key={folder._id} value={folder._id} className="relative">
+                      <AccordionItem key={folder._id} value={folder._id}>
                         <DroppableFolder
                           folderId={folder._id}
                           folderName={folder.name}

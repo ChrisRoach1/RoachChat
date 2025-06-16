@@ -205,7 +205,7 @@ export const listAllAvailableModels = query({
 
   handler: async (ctx) =>{
     const models = await ctx.db
-    .query("availableModels").collect();
+    .query("availableModels").withIndex("by_orderNumber").order("asc").collect();
 
     return models;
   }

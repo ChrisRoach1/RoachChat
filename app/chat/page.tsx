@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Anthropic, OpenAI } from "@lobehub/icons";
 
 export default function ChatPage() {
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -73,22 +74,6 @@ export default function ChatPage() {
     return modelInfo?.modelDescription || modelName;
   };
 
-  // Show loading state while models are being fetched or seeded
-  // if (listAllAvailableModels === undefined) {
-  //   return (
-  //     <SidebarProvider>
-  //       <AppSidebar setCurrentThreadId={handleSetThreadId} currentThreadId={threadId} />
-  //       <SidebarTrigger />
-  //       <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-background via-background to-muted/10 flex-1">
-  //         <div className="text-center">
-  //           <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-4"></div>
-  //           <p className="text-muted-foreground">Loading available models...</p>
-  //         </div>
-  //       </div>
-  //     </SidebarProvider>
-  //   );
-  // }
-
   return (
     <SidebarProvider>
       <AppSidebar
@@ -136,7 +121,7 @@ export default function ChatPage() {
                         className="cursor-pointer hover:bg-muted/50 focus:bg-muted/50"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0 w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                          {ReturnModelIcon(model.provider)}
                           <div className="flex flex-col text-left">
                             <span className="font-medium">{model.modelDescription}</span>
                           </div>
@@ -195,3 +180,16 @@ export default function ChatPage() {
 }
 
 
+function ReturnModelIcon(modelProvider: string | undefined){
+  switch (modelProvider) {
+    case "OpenAI":
+      return <OpenAI />
+      break;
+    case "Anthropic":
+      return <Anthropic />
+      break; 
+    default:
+      return(<div className="flex-shrink-0 w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>)
+      break;
+  }
+}

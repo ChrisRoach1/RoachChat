@@ -28,6 +28,8 @@ import {
   FormField,
   FormItem,
 } from "./ui/form";
+import { Textarea } from "./ui/textarea";
+import { Anthropic, OpenAI } from '@lobehub/icons';
 
 export default function Chat({ threadId }: { threadId: string }) {
   const messageFormSchema = z.object({
@@ -234,7 +236,7 @@ export default function Chat({ threadId }: { threadId: string }) {
                         className="cursor-pointer hover:bg-muted/50 focus:bg-muted/50"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="flex-shrink-0 w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                          {ReturnModelIcon(model?.provider)}
                           <div className="flex flex-col text-left">
                             <span className="font-medium text-sm">
                               {model.modelDescription}
@@ -254,7 +256,7 @@ export default function Chat({ threadId }: { threadId: string }) {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input placeholder="Type your message...." {...field} />
+                        <Textarea className="resize-none" placeholder="Type your message...." {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -293,7 +295,6 @@ function MessageContent({ text }: { text: string }) {
     let match: RegExpExecArray | null;
 
     while ((match = codeBlockRegex.exec(text)) !== null) {
-      // Add text before the code block
       if (match.index > lastIndex) {
         const textContent = text.slice(lastIndex, match.index);
         if (textContent.trim()) {
@@ -305,7 +306,6 @@ function MessageContent({ text }: { text: string }) {
         }
       }
 
-      // Add the code block
       const language = match[1] || "text";
       const code = match[2] || "";
       parts.push({
@@ -318,7 +318,6 @@ function MessageContent({ text }: { text: string }) {
       lastIndex = match.index + match[0].length;
     }
 
-    // Add remaining text after the last code block
     if (lastIndex < text.length) {
       const textContent = text.slice(lastIndex);
       if (textContent.trim()) {
@@ -357,7 +356,7 @@ function MessageContent({ text }: { text: string }) {
                 <div className="overflow-x-auto">
                   <SyntaxHighlighter
                     language={part.language}
-                    style={darcula}
+                    style={darcula}                  
                     customStyle={{
                       margin: 0,
                       padding: "1rem",
@@ -394,4 +393,18 @@ function MessageContent({ text }: { text: string }) {
       })}
     </div>
   );
+}
+
+function ReturnModelIcon(modelProvider: string | undefined){
+  switch (modelProvider) {
+    case "OpenAI":
+      return <OpenAI />
+      break;
+    case "Anthropic":
+      return <Anthropic />
+      break; 
+    default:
+      return(<div className="flex-shrink-0 w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>)
+      break;
+  }
 }

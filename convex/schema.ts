@@ -17,8 +17,10 @@ export default defineSchema({
 
   availableModels: defineTable({
     modelDescription: v.string(),
-    modelName: v.string()
-  }),
+    modelName: v.string(),
+    orderNumber: v.optional(v.number()),
+    provider: v.optional(v.string())
+  }).index("by_orderNumber", ["orderNumber"]),
 
   userGeneratedImages: defineTable({
     userId: v.string(),
