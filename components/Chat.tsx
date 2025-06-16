@@ -48,7 +48,7 @@ export default function Chat({ threadId }: { threadId: string }) {
   const messagesResult = useThreadMessages(
     api.chat.listThreadMessages,
     { threadId: threadId },
-    { initialNumItems: 1000, stream: true },
+    { initialNumItems: 10000, stream: true },
   );
 
   const listAllAvailableModels = useQuery(api.chat.listAllAvailableModels);
@@ -103,6 +103,17 @@ export default function Chat({ threadId }: { threadId: string }) {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+    if (messagesResult.isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-background via-background to-muted/10 flex-1">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    </div>
+    );
+  }
 
   return (
     <div className="flex h-screen flex-col flex-1">

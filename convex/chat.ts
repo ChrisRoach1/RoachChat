@@ -10,7 +10,13 @@ import { paginationOptsValidator } from "convex/server";
 
 const MODELS = {
   gpt4o: openai("gpt-4o"),
-  claude4Sonnet: anthropic("claude-4-sonnet-20250514")
+  gpt4omini: openai("gpt-4o-mini"),
+  gpt41: openai("gpt-4.1"),
+  gpt41mini: openai("gpt-4.1-mini"),
+  gpt41nano: openai("gpt-4.1-nano"),
+  claude4Sonnet: anthropic("claude-4-sonnet-20250514"),
+  claude35Sonnet: anthropic("claude-3-5-sonnet-latest"),
+  claude37Sonnet: anthropic("claude-3-7-sonnet-20250219")
 }
 
 const createAgent = (modelType: string) => {
@@ -181,7 +187,6 @@ export const listThreadMessages = query({
       threadId: threadId
     });
 
-    // If thread doesn't exist or doesn't belong to user, throw an error
     if (thread?.userId !== userID) {
       throw new Error("Access denied");
     }

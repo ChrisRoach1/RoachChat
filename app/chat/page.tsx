@@ -37,13 +37,6 @@ export default function ChatPage() {
   }, [searchParams]);
 
 
-  // Set default model when models are loaded
-  useEffect(() => {
-    if (listAllAvailableModels && listAllAvailableModels.length > 0 && !selectedModel) {
-      setSelectedModel(listAllAvailableModels[0].modelName);
-    }
-  }, [listAllAvailableModels, selectedModel]);
-
   const handleCreateThread = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!threadTitle.trim() || !selectedModel) return;
@@ -81,20 +74,20 @@ export default function ChatPage() {
   };
 
   // Show loading state while models are being fetched or seeded
-  if (listAllAvailableModels === undefined) {
-    return (
-      <SidebarProvider>
-        <AppSidebar setCurrentThreadId={handleSetThreadId} currentThreadId={threadId} />
-        <SidebarTrigger />
-        <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-background via-background to-muted/10 flex-1">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading available models...</p>
-          </div>
-        </div>
-      </SidebarProvider>
-    );
-  }
+  // if (listAllAvailableModels === undefined) {
+  //   return (
+  //     <SidebarProvider>
+  //       <AppSidebar setCurrentThreadId={handleSetThreadId} currentThreadId={threadId} />
+  //       <SidebarTrigger />
+  //       <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-background via-background to-muted/10 flex-1">
+  //         <div className="text-center">
+  //           <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-4"></div>
+  //           <p className="text-muted-foreground">Loading available models...</p>
+  //         </div>
+  //       </div>
+  //     </SidebarProvider>
+  //   );
+  // }
 
   return (
     <SidebarProvider>

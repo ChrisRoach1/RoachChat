@@ -26,6 +26,12 @@ export default defineSchema({
     status: v.string(),
     imageUrl: v.optional(v.string()),
     prompt: v.string()
+  }).index("by_userId", ["userId"]),
+
+  userFolders: defineTable({
+    userId: v.string(),
+    name: v.string(),
+    threadIds: v.optional(v.array(v.string()))
   }).index("by_userId", ["userId"])
 });
 

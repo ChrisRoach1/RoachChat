@@ -9,6 +9,7 @@
  */
 
 import type * as chat from "../chat.js";
+import type * as folder from "../folder.js";
 import type * as image from "../image.js";
 import type * as myFunctions from "../myFunctions.js";
 
@@ -28,6 +29,7 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   chat: typeof chat;
+  folder: typeof folder;
   image: typeof image;
   myFunctions: typeof myFunctions;
 }>;
