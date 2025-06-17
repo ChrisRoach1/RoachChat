@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  transpilePackages: ['@lobehub/icons'],
+  transpilePackages: ['@lobehub/icons']
 };
 
 export default nextConfig;

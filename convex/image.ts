@@ -1,12 +1,8 @@
 import { openai, } from "@ai-sdk/openai";
-import { anthropic } from '@ai-sdk/anthropic';
-
 import { v } from "convex/values";
-import { api, components, internal } from "./_generated/api";
-import { Agent, vStreamArgs } from "@convex-dev/agent";
-import { action, internalAction, internalMutation, mutation } from "./_generated/server";
+import {internal } from "./_generated/api";
+import { action, internalMutation, mutation } from "./_generated/server";
 import { query } from "./_generated/server";
-import { paginationOptsValidator } from "convex/server";
 import { experimental_generateImage as generateImage } from 'ai';
 
 

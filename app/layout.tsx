@@ -19,9 +19,12 @@ export const metadata: Metadata = {
   title: "Roach Chat",
   description: "A multi-model AI chat app",
   icons: {
-    icon: "/convex.svg",
+    icon: "/image.svg",
   },
 };
+
+export const dynamic = 'force-dynamic'
+
 
 export default function RootLayout({
   children,
@@ -35,7 +38,7 @@ export default function RootLayout({
       >
         <ClerkProvider dynamic>
           <ConvexClientProvider>
-          <ReactScan />
+          {/* <ReactScan /> */}
 
             {children}
           </ConvexClientProvider>

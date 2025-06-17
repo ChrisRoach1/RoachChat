@@ -17,7 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Anthropic, OpenAI } from "@lobehub/icons";
+import { Anthropic,OpenAI } from "@lobehub/icons";
+import Image from "next/image";
 
 export default function ChatPage() {
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -51,6 +52,7 @@ export default function ChatPage() {
       setThreadId(newThreadId);
       router.push(pathName + "?thread=" + newThreadId);
       setThreadTitle("");
+      setSelectedModel("")
     } catch (error) {
       console.error("Failed to create thread:", error);
     } finally {
@@ -85,11 +87,8 @@ export default function ChatPage() {
         <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-background via-background to-muted/10 flex-1">
           <div className="text-center max-w-lg w-full px-6">
             {/* Hero Section */}
-            <div className="relative mb-8">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-600/20 rounded-full blur-3xl"></div>
-              <div className="relative rounded-full bg-gradient-to-br from-primary/20 to-primary/10 p-8 mb-6 backdrop-blur-sm border border-primary/10">
-                <MessageCircle className="h-20 w-20 text-primary mx-auto" />
-              </div>
+            <div className="relative mb-8 flex justify-center items-center">
+              <Image src={"image.svg"} alt="My SVG" width={250} height={250} />
             </div>
             
             <div className="space-y-4 mb-8">
@@ -97,7 +96,7 @@ export default function ChatPage() {
                 Welcome to Roach Chat
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Start a new conversation with our AI assistant. Choose your preferred model and give your thread a title to begin!
+                Start a new conversation with our helpful little artificial roach. Choose your preferred model and give your thread a title to begin!
               </p>
             </div>
 
@@ -142,7 +141,7 @@ export default function ChatPage() {
                   value={threadTitle}
                   onChange={(e) => setThreadTitle(e.target.value)}
                   placeholder="Enter a descriptive title for your conversation..."
-                  className="h-12 text-center bg-background/50 backdrop-blur-sm border-2 border-border hover:border-primary/50 transition-all duration-200 focus:ring-2 focus:ring-primary/20 text-base"
+                  className="h-12 text-center border-2 focus:border-primary/50 hover:border-primary/50 transition-all duration-200"
                   maxLength={100}
                 />
               </div>
@@ -185,7 +184,7 @@ function ReturnModelIcon(modelProvider: string | undefined){
     case "OpenAI":
       return <OpenAI />
       break;
-    case "Anthropic":
+    case "Claude":
       return <Anthropic />
       break; 
     default:

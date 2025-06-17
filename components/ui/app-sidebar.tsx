@@ -6,7 +6,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -363,7 +362,6 @@ export function AppSidebar({ setCurrentThreadId, currentThreadId }: props) {
       >
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Roach Chat</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem key="image-gen-button">

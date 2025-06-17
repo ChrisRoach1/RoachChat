@@ -35,6 +35,8 @@ const availableModels = [
   //{ modelName: "gpt-image-1", modelDescription: "GPT Image 1" },
 ];
 
+
+
 export default function ImageGenPage() {
   const messageFormSchema = z.object({
     message: z.string().min(1),
@@ -130,9 +132,6 @@ export default function ImageGenPage() {
           <div className="max-w-6xl mx-auto p-6">
             <div className="text-center mb-6">
               <div className="flex items-center justify-center gap-3 mb-4">
-                <div className="rounded-full bg-gradient-to-br from-primary/20 to-primary/10 p-3 backdrop-blur-sm border border-primary/10">
-                  <ImageIcon className="h-6 w-6 text-primary" />
-                </div>
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
                   AI Image Generation
                 </h1>
@@ -296,9 +295,6 @@ export default function ImageGenPage() {
             {/* Empty State */}
             {userImages?.length === 0 && (
               <div className="text-center py-12">
-                <div className="rounded-full bg-gradient-to-br from-primary/20 to-primary/10 p-8 mb-6 backdrop-blur-sm border border-primary/10 w-fit mx-auto">
-                  <ImageIcon className="h-12 w-12 text-primary" />
-                </div>
                 <h3 className="text-lg font-semibold mb-2">
                   No images generated yet
                 </h3>
