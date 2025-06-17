@@ -17,8 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Anthropic,OpenAI } from "@lobehub/icons";
 import Image from "next/image";
+import ReturnModelIcon from "@/components/model-icon";
 
 export default function ChatPage() {
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -176,19 +176,4 @@ export default function ChatPage() {
       )}
     </SidebarProvider>
   );
-}
-
-
-function ReturnModelIcon(modelProvider: string | undefined){
-  switch (modelProvider) {
-    case "OpenAI":
-      return <OpenAI />
-      break;
-    case "Claude":
-      return <Anthropic />
-      break; 
-    default:
-      return(<div className="flex-shrink-0 w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>)
-      break;
-  }
 }

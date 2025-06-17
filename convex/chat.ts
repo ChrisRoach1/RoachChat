@@ -139,8 +139,33 @@ export const createThread = action({
 });
 
 export const streamMessageAsynchronously = mutation({
-  args: { prompt: v.string(), threadId: v.string() },
-  handler: async (ctx, { prompt, threadId }) => {
+  args: { 
+    prompt: v.string(), 
+    threadId: v.string(),
+    currentDate: v.string() 
+  },
+  handler: async (ctx, { prompt, threadId, currentDate }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
+      throw new Error("Not authenticated");
+    }
+
+    const userID = identity.tokenIdentifier.split('|')[1];
+
+    const todaysCount = await ctx.db.query("userSentCounts").withIndex("by_date_and_userId", q => q.eq("date", currentDate).eq("userId", userID)).first();
+    let currentCount;
+    if(todaysCount){
+      currentCount = todaysCount.count + 1;
+      await ctx.db.patch(todaysCount._id, {count: currentCount});
+    }else{
+      currentCount = 1;
+      await ctx.db.insert("userSentCounts", {userId: userID, date: currentDate, count: currentCount});
+    }
+
+    if(currentCount >= 30){
+      throw new Error("Free limit reached for the day!");
+    }
+
     const modelName = await ctx.runQuery(api.chat.getThreadModelPreference, {threadId});
     const dynamicAgent = createAgent(modelName);
 
@@ -149,6 +174,7 @@ export const streamMessageAsynchronously = mutation({
       prompt,
       skipEmbeddings: true,
     });
+
     await ctx.scheduler.runAfter(0, internal.chat.streamMessage, {
       threadId,
       promptMessageId: messageId,
@@ -247,5 +273,22 @@ export const updateThreadTitle = mutation({
       threadId: args.threadId
     });
 
+  }
+})
+
+export const getCurrentMessageCount = query({
+  args:{
+    currentDate: v.string()
+  },
+  handler: async (ctx, args) =>{
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
+      throw new Error("Not authenticated");
+    }
+    const userID = identity.tokenIdentifier.split('|')[1];
+
+    const todaysCount = await ctx.db.query("userSentCounts").withIndex("by_date_and_userId", q => q.eq("date", args.currentDate).eq("userId", userID)).first();
+
+    return todaysCount;
   }
 })

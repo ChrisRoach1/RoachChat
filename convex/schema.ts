@@ -34,6 +34,12 @@ export default defineSchema({
     userId: v.string(),
     name: v.string(),
     threadIds: v.optional(v.array(v.string()))
-  }).index("by_userId", ["userId"])
+  }).index("by_userId", ["userId"]),
+
+  userSentCounts: defineTable({
+    userId: v.string(),
+    date: v.string(),
+    count: v.number()
+  }).index("by_date_and_userId", ["date", "userId"])
 });
 

@@ -23,10 +23,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem } from "./ui/form";
 import { Textarea } from "./ui/textarea";
-import { Anthropic, OpenAI } from "@lobehub/icons";
+import ReturnModelIcon from "./model-icon";
 
 export default function Chat({ threadId }: { threadId: string }) {
-  
   const messageFormSchema = z.object({
     message: z.string().min(1),
   });
@@ -37,18 +36,25 @@ export default function Chat({ threadId }: { threadId: string }) {
       message: "",
     },
   });
+  
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isThinking, setIsThinking] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string | undefined>("");
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const currentDate = new Date().toISOString().split('T')[0];
 
   const messagesResult = useThreadMessages(
     api.chat.listThreadMessages,
     { threadId: threadId },
-    { initialNumItems: 10000, stream: true },
+    { initialNumItems: 25, stream: true },
   );
 
   const listAllAvailableModels = useQuery(api.chat.listAllAvailableModels);
+  const currentMessageCount = useQuery(api.chat.getCurrentMessageCount, {currentDate});
   const getThreadModelPreference = useQuery(api.chat.getThreadModelPreference, {
     threadId,
   });
@@ -61,20 +67,33 @@ export default function Chat({ threadId }: { threadId: string }) {
     optimisticallySendMessage(api.chat.listThreadMessages),
   );
 
+  const loadMoreMessages = async () => {
+    if (messagesResult.status === "CanLoadMore" && !isLoadingMore) {
+      setIsLoadingMore(true);
+      try {
+        await messagesResult.loadMore(50);
+      } catch (error) {
+        console.error("Failed to load more messages:", error);
+      } finally {
+        setIsLoadingMore(false);
+      }
+    }
+  };
+
   useEffect(() => {
     setSelectedModel(getThreadModelPreference);
+    scrollToBottom();
   }, [getThreadModelPreference]);
 
   useEffect(() => {
-    scrollToBottom();
-    if (
-      messagesResult.results.some(
-        (x) => x.status === "pending" && x.message?.role !== "user",
-      )
-    ) {
-      setIsThinking(false);
-    }
+    if (messagesResult.results.some((x) => x.status === "pending" && x.message?.role !== "user")) 
+      {
+        setIsThinking(false);
+        scrollToBottom();
+      }
+
   }, [messagesResult.results]);
+
 
   const handleSelectedModel = async (modelName: string) => {
     if (modelName !== "") {
@@ -88,7 +107,7 @@ export default function Chat({ threadId }: { threadId: string }) {
 
     try {
       setIsThinking(true);
-      await sendMessage({ threadId, prompt: values.message });
+      await sendMessage({ threadId, prompt: values.message, currentDate: currentDate });
     } catch (error) {
       setIsThinking(false);
       console.error("Failed to send message:", error);
@@ -97,9 +116,8 @@ export default function Chat({ threadId }: { threadId: string }) {
     form.reset();
   }
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+
+
 
   if (messagesResult.isLoading) {
     return (
@@ -135,6 +153,20 @@ export default function Chat({ threadId }: { threadId: string }) {
               </div>
             ) : (
               <>
+                {/* Load More Button */}
+                {messagesResult.status === "CanLoadMore" && (
+                  <div className="flex justify-center pb-4">
+                    <Button
+                      variant="outline"
+                      onClick={loadMoreMessages}
+                      disabled={isLoadingMore}
+                      className="text-sm"
+                    >
+                      {isLoadingMore ? "Loading..." : "Load More Messages"}
+                    </Button>
+                  </div>
+                )}
+
                 {messagesResult.results.map((message, i) => (
                   <MemoizedMessageItem
                     key={message.id ?? i}
@@ -414,18 +446,3 @@ const MemoizedCodeBlock = memo(function CodeBlock({
   );
 });
 
-function ReturnModelIcon(modelProvider: string | undefined) {
-  switch (modelProvider) {
-    case "OpenAI":
-      return <OpenAI />;
-      break;
-    case "Claude":
-      return <Anthropic />;
-      break;
-    default:
-      return (
-        <div className="flex-shrink-0 w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
-      );
-      break;
-  }
-}
