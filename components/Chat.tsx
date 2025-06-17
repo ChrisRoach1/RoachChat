@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send } from "lucide-react";
+import { Send, AlertCircle, X } from "lucide-react";
 import { useEffect, useRef, useState, memo, useMemo } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { darcula } from "react-syntax-highlighter/dist/esm/styles/prism";
 import ReactMarkdown from "react-markdown";
@@ -45,7 +46,10 @@ export default function Chat({ threadId }: { threadId: string }) {
   const [isThinking, setIsThinking] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string | undefined>("");
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [showLimitAlert, setShowLimitAlert] = useState(false);
+  const [isAtMessageLimit, setIsAtMessageLimit] = useState(false);
   const currentDate = new Date().toISOString().split('T')[0];
+
 
   const messagesResult = useThreadMessages(
     api.chat.listThreadMessages,
@@ -94,6 +98,12 @@ export default function Chat({ threadId }: { threadId: string }) {
 
   }, [messagesResult.results]);
 
+  useEffect(() => {
+    if (currentMessageCount && currentMessageCount?.count >= 30) {
+      setShowLimitAlert(true);
+      setIsAtMessageLimit(true);
+    }
+  }, [currentMessageCount]);
 
   const handleSelectedModel = async (modelName: string) => {
     if (modelName !== "") {
@@ -101,6 +111,7 @@ export default function Chat({ threadId }: { threadId: string }) {
       await updateThreadModelPreference({ threadId, modelName });
     }
   };
+
 
   async function sendMessageHandler(values: z.infer<typeof messageFormSchema>) {
     if (!values.message.trim()) return;
@@ -115,9 +126,6 @@ export default function Chat({ threadId }: { threadId: string }) {
 
     form.reset();
   }
-
-
-
 
   if (messagesResult.isLoading) {
     return (
@@ -205,7 +213,29 @@ export default function Chat({ threadId }: { threadId: string }) {
 
       {/* Input */}
       <div className="border-t bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
-        <div className="max-w-4xl mx-auto p-4">
+        <div className="max-w-4xl mx-auto p-4 relative">
+          {/* Daily Limit Alert */}
+          {showLimitAlert && (
+            <div className="absolute bottom-full left-4 right-4 mb-2 z-50">
+              <Alert variant="destructive" className="shadow-lg border-destructive/50 bg-primary/60 backdrop-blur-sm">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="flex items-center justify-between">
+                  <span>
+                    You&apos;ve reached your daily limit of 30 messages. Try again tomorrow!
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-1 hover:bg-destructive/20"
+                    onClick={() => setShowLimitAlert(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(sendMessageHandler)}
@@ -216,8 +246,9 @@ export default function Chat({ threadId }: { threadId: string }) {
                 <Select
                   value={selectedModel}
                   onValueChange={(value) => handleSelectedModel(value)}
+                  disabled={isAtMessageLimit}
                 >
-                  <SelectTrigger className="w-[200px] h-12 bg-background/50 backdrop-blur-sm border-2 border-border hover:border-primary/50 transition-all duration-200 focus:ring-2 focus:ring-primary/20">
+                  <SelectTrigger className="w-[200px] h-12 bg-background/50 backdrop-blur-sm border-2 border-border hover:border-primary/50 transition-all duration-200 focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed">
                     <SelectValue placeholder="Select model" />
                   </SelectTrigger>
                   <SelectContent className="bg-background/95 backdrop-blur-sm">
@@ -249,8 +280,9 @@ export default function Chat({ threadId }: { threadId: string }) {
                     <FormItem>
                       <FormControl>
                         <Textarea
-                          className="resize-none"
-                          placeholder="Type your message...."
+                          className="resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                          placeholder={isAtMessageLimit ? "Daily message limit reached" : "Type your message...."}
+                          disabled={isAtMessageLimit}
                           {...field}
                         />
                       </FormControl>
@@ -262,14 +294,24 @@ export default function Chat({ threadId }: { threadId: string }) {
               <Button
                 type="submit"
                 size="icon"
-                disabled={!form.formState.isValid}
-                className="h-12 w-12 rounded-full shrink-0"
+                disabled={!form.formState.isValid || isAtMessageLimit}
+                className="h-12 w-12 rounded-full shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={isAtMessageLimit ? "Daily message limit reached" : "Send message"}
               >
                 <Send className="h-4 w-4" />
                 <span className="sr-only">Send message</span>
               </Button>
             </form>
           </Form>
+          
+          {/* Daily usage indicator */}
+          {currentMessageCount !== undefined && currentMessageCount !== null && (
+            <div className="flex justify-center mt-2">
+              <span className="text-xs text-muted-foreground">
+                Daily messages: {currentMessageCount.count}/30
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>
