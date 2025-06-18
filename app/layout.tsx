@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
-import { ReactScan } from "@/components/react-scan";
+// import { ReactScan } from "@/components/react-scan";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({

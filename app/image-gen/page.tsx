@@ -76,7 +76,7 @@ export default function ImageGenPage() {
         userGeneratedImageId: recordId,
       });
 
-    } catch (error) {
+    } catch {
       toast.error("Failed to create image please try again later.");
     }
   };
@@ -110,7 +110,7 @@ export default function ImageGenPage() {
       // Clean up
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
-    } catch (error) {
+    } catch {
       toast.error("Failed to download please try again later.");
     }
   };

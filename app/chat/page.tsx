@@ -60,7 +60,7 @@ export default function ChatPage() {
       router.push(pathName + "?thread=" + newThreadId);
       setThreadTitle("");
       setSelectedModel("")
-    } catch (error) {
+    } catch{
       toast.error("Failed to create thread please try again later.");
     } finally {
       setIsCreating(false);
