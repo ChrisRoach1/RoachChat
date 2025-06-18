@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/select";
 import Image from "next/image";
 import ReturnModelIcon from "@/components/model-icon";
+import { toast } from 'sonner';
+import { useAuth } from "@clerk/nextjs";
 
 export default function ChatPage() {
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -30,6 +32,11 @@ export default function ChatPage() {
   const pathName = usePathname();
   const searchParams = useSearchParams();
   const listAllAvailableModels = useQuery(api.chat.listAllAvailableModels);
+
+  if(!useAuth().isSignedIn){
+    router.push("/")
+  }
+
 
   useEffect(() => {
     const threadFromUrl = searchParams.get("thread");
@@ -54,7 +61,7 @@ export default function ChatPage() {
       setThreadTitle("");
       setSelectedModel("")
     } catch (error) {
-      console.error("Failed to create thread:", error);
+      toast.error("Failed to create thread please try again later.");
     } finally {
       setIsCreating(false);
     }

@@ -1,3 +1,5 @@
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, AlertCircle, X } from "lucide-react";
@@ -25,6 +27,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem } from "./ui/form";
 import { Textarea } from "./ui/textarea";
 import ReturnModelIcon from "./model-icon";
+import { toast } from 'sonner';
 
 export default function Chat({ threadId }: { threadId: string }) {
   const messageFormSchema = z.object({
@@ -48,8 +51,10 @@ export default function Chat({ threadId }: { threadId: string }) {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showLimitAlert, setShowLimitAlert] = useState(false);
   const [isAtMessageLimit, setIsAtMessageLimit] = useState(false);
-  const currentDate = new Date().toISOString().split('T')[0];
-
+  const currentDate = new Date().toDateString();
+  
+  //this is temporary until we move into pricing model 
+  const MESSAGE_LIMIT = 30;
 
   const messagesResult = useThreadMessages(
     api.chat.listThreadMessages,
@@ -76,8 +81,8 @@ export default function Chat({ threadId }: { threadId: string }) {
       setIsLoadingMore(true);
       try {
         await messagesResult.loadMore(50);
-      } catch (error) {
-        console.error("Failed to load more messages:", error);
+      } catch {
+        toast.error("Failed to load message please try again later.");
       } finally {
         setIsLoadingMore(false);
       }
@@ -99,7 +104,7 @@ export default function Chat({ threadId }: { threadId: string }) {
   }, [messagesResult.results]);
 
   useEffect(() => {
-    if (currentMessageCount && currentMessageCount?.count >= 30) {
+    if (currentMessageCount && currentMessageCount?.count >= MESSAGE_LIMIT) {
       setShowLimitAlert(true);
       setIsAtMessageLimit(true);
     }
@@ -115,13 +120,12 @@ export default function Chat({ threadId }: { threadId: string }) {
 
   async function sendMessageHandler(values: z.infer<typeof messageFormSchema>) {
     if (!values.message.trim()) return;
-
     try {
       setIsThinking(true);
       await sendMessage({ threadId, prompt: values.message, currentDate: currentDate });
-    } catch (error) {
+    } catch {
       setIsThinking(false);
-      console.error("Failed to send message:", error);
+      toast.error("Failed to send message please try again later.");
     }
 
     form.reset();
@@ -139,21 +143,21 @@ export default function Chat({ threadId }: { threadId: string }) {
   }
 
   return (
-    <div className="flex h-screen flex-col flex-1">
+    <div className="flex h-screen flex-col flex-1 min-w-0">
       {/* Header */}
       <div className="border-b bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
-        <div className="flex items-center gap-3 p-4 max-w-4xl mx-auto">
+        <div className="flex items-center gap-3 p-4 w-full max-w-4xl mx-auto">
           <div className="flex items-center gap-2">
           </div>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden min-w-0">
         <ScrollArea className="h-full">
-          <div className="max-w-4xl mx-auto p-4 space-y-6">
+          <div className="w-full max-w-4xl mx-auto p-4 space-y-6">
             {messagesResult.results.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-[60vh] text-center">
+              <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
                 <p className="text-muted-foreground max-w-md">
                   Start a conversation by typing a message below. I&apos;m here
                   to help with any questions you have!
@@ -177,7 +181,7 @@ export default function Chat({ threadId }: { threadId: string }) {
 
                 {messagesResult.results.map((message, i) => (
                   <MemoizedMessageItem
-                    key={message.id ?? i}
+                    key={message.id || `temp-${i}-${message.text?.slice(0, 10) || 'empty'}`}
                     message={message}
                   />
                 ))}
@@ -185,7 +189,7 @@ export default function Chat({ threadId }: { threadId: string }) {
                 {/* Loading indicator for pending messages */}
                 {isThinking ? (
                   <div className="flex gap-3 justify-start">
-                    <div className="group max-w-[80%] order-2">
+                    <div className="group max-w-[85%] sm:max-w-[80%] order-2">
                       <div className="rounded-2xl px-4 py-3 shadow-sm bg-card border">
                         <div className="flex items-center gap-2">
                           <div className="flex space-x-1">
@@ -213,20 +217,20 @@ export default function Chat({ threadId }: { threadId: string }) {
 
       {/* Input */}
       <div className="border-t bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/50">
-        <div className="max-w-4xl mx-auto p-4 relative">
+        <div className="w-full max-w-4xl mx-auto p-4 relative">
           {/* Daily Limit Alert */}
           {showLimitAlert && (
             <div className="absolute bottom-full left-4 right-4 mb-2 z-50">
               <Alert variant="destructive" className="shadow-lg border-destructive/50 bg-primary/60 backdrop-blur-sm">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription className="flex items-center justify-between">
-                  <span>
-                    You&apos;ve reached your daily limit of 30 messages. Try again tomorrow!
+                  <span className="text-sm">
+                    You&apos;ve reached your daily limit of {MESSAGE_LIMIT.toString()} messages. Try again tomorrow!
                   </span>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-auto p-1 hover:bg-destructive/20"
+                    className="h-auto p-1 hover:bg-destructive/20 shrink-0 ml-2"
                     onClick={() => setShowLimitAlert(false)}
                   >
                     <X className="h-4 w-4" />
@@ -239,16 +243,16 @@ export default function Chat({ threadId }: { threadId: string }) {
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(sendMessageHandler)}
-              className="flex gap-2"
+              className="flex flex-col sm:flex-row gap-2"
             >
               {/* Model Selector */}
-              <div>
+              <div className="w-full sm:w-auto">
                 <Select
                   value={selectedModel}
                   onValueChange={(value) => handleSelectedModel(value)}
                   disabled={isAtMessageLimit}
                 >
-                  <SelectTrigger className="w-[200px] h-12 bg-background/50 backdrop-blur-sm border-2 border-border hover:border-primary/50 transition-all duration-200 focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <SelectTrigger className="w-full sm:w-[200px] h-12 bg-background/50 backdrop-blur-sm border-2 border-border hover:border-primary/50 transition-all duration-200 focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed">
                     <SelectValue placeholder="Select model" />
                   </SelectTrigger>
                   <SelectContent className="bg-background/95 backdrop-blur-sm">
@@ -272,35 +276,37 @@ export default function Chat({ threadId }: { threadId: string }) {
                 </Select>
               </div>
 
-              <div className="flex-1 relative">
-                <FormField
-                  control={form.control}
-                  name="message"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Textarea
-                          className="resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-                          placeholder={isAtMessageLimit ? "Daily message limit reached" : "Type your message...."}
-                          disabled={isAtMessageLimit}
-                          {...field}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <div className="flex gap-2 flex-1 min-w-0">
+                <div className="flex-1 relative min-w-0">
+                  <FormField
+                    control={form.control}
+                    name="message"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Textarea
+                            className="resize-none disabled:opacity-50 disabled:cursor-not-allowed min-w-0"
+                            placeholder={isAtMessageLimit ? "Daily message limit reached" : "Type your message...."}
+                            disabled={isAtMessageLimit}
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-              <Button
-                type="submit"
-                size="icon"
-                disabled={!form.formState.isValid || isAtMessageLimit}
-                className="h-12 w-12 rounded-full shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                title={isAtMessageLimit ? "Daily message limit reached" : "Send message"}
-              >
-                <Send className="h-4 w-4" />
-                <span className="sr-only">Send message</span>
-              </Button>
+                <Button
+                  type="submit"
+                  size="icon"
+                  disabled={!form.formState.isValid || isAtMessageLimit}
+                  className="h-12 w-12 rounded-full shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={isAtMessageLimit ? "Daily message limit reached" : "Send message"}
+                >
+                  <Send className="h-4 w-4" />
+                  <span className="sr-only">Send message</span>
+                </Button>
+              </div>
             </form>
           </Form>
           
@@ -308,7 +314,7 @@ export default function Chat({ threadId }: { threadId: string }) {
           {currentMessageCount !== undefined && currentMessageCount !== null && (
             <div className="flex justify-center mt-2">
               <span className="text-xs text-muted-foreground">
-                Daily messages: {currentMessageCount.count}/30
+                Daily messages: {currentMessageCount.count}/{MESSAGE_LIMIT.toString()}
               </span>
             </div>
           )}
@@ -330,18 +336,18 @@ const MemoizedMessageItem = memo(function MessageItem({
       }`}
     >
       <div
-        className={`group max-w-[80%] ${
+        className={`group max-w-[85%] sm:max-w-[80%] min-w-0 ${
           message.message?.role === "user" ? "order-1" : "order-2"
         }`}
       >
         <div
-          className={`rounded-2xl px-4 py-3 shadow-sm transition-all duration-200 ${
+          className={`rounded-2xl px-4 py-3 shadow-sm transition-colors transition-shadow duration-200 min-w-0 ${
             message.message?.role === "user"
               ? "bg-primary text-primary-foreground ml-auto"
               : "bg-card border"
           }`}
         >
-          <div className="whitespace-pre-wrap">
+          <div className="whitespace-pre-wrap break-words min-w-0">
             <div key={`${message.id}`} className="leading-relaxed">
               <MemoizedMessageContent text={message.text || ""} />
             </div>
@@ -415,7 +421,7 @@ const MemoizedMessageContent = memo(function MessageContent({
   }, [text]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 min-w-0">
       {parsedParts.map((part) => {
         if (part.type === "code") {
           return (
@@ -429,9 +435,9 @@ const MemoizedMessageContent = memo(function MessageContent({
           return (
             <div
               key={part.key}
-              className="prose prose-sm max-w-none prose-neutral dark:prose-invert"
+              className="prose prose-sm max-w-none prose-neutral dark:prose-invert min-w-0"
             >
-              <div className="whitespace-pre-wrap leading-relaxed">
+              <div className="whitespace-pre-wrap leading-relaxed break-words">
                 <ReactMarkdown>{part.content}</ReactMarkdown>
               </div>
             </div>
@@ -450,38 +456,44 @@ const MemoizedCodeBlock = memo(function CodeBlock({
   content: string;
 }) {
   return (
-    <div className="not-prose">
-      <div className="rounded-lg overflow-hidden border border-border/50 bg-muted/30">
-        <div className="flex items-center justify-between px-4 py-2 bg-muted/50 border-b border-border/30">
-          <span className="text-xs font-mono text-muted-foreground uppercase tracking-wide">
+    <div className="not-prose min-w-0">
+      <div className="rounded-lg overflow-hidden border border-border/50 bg-muted/30 min-w-0">
+        <div className="flex items-center justify-between px-4 py-2 bg-muted/50 border-b border-border/30 min-w-0">
+          <span className="text-xs font-mono text-muted-foreground uppercase tracking-wide truncate">
             {language}
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0 ml-2">
             <div className="w-2 h-2 rounded-full bg-red-400"></div>
             <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
             <div className="w-2 h-2 rounded-full bg-green-400"></div>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <SyntaxHighlighter
-            language={language}
-            style={darcula}
-            customStyle={{
-              margin: 0,
-              padding: "1rem",
-              background: "transparent",
-              fontSize: "0.875rem",
-              lineHeight: "1.5",
-            }}
-            codeTagProps={{
-              style: {
-                fontFamily:
-                  'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-              },
-            }}
-          >
-            {content.trim()}
-          </SyntaxHighlighter>
+        <div className="min-w-0">
+          <div className="overflow-x-auto max-w-full">
+            <SyntaxHighlighter
+              language={language}
+              style={darcula}
+              customStyle={{
+                margin: 0,
+                padding: "1rem",
+                background: "transparent",
+                fontSize: "0.875rem",
+                lineHeight: "1.5",
+                minWidth: "0",
+                wordBreak: "break-all" as const,
+              }}
+              codeTagProps={{
+                style: {
+                  fontFamily:
+                    'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                  wordBreak: "break-all" as const,
+                },
+              }}
+              wrapLongLines={true}
+            >
+              {content.trim()}
+            </SyntaxHighlighter>
+          </div>
         </div>
       </div>
     </div>

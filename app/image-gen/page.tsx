@@ -28,6 +28,8 @@ import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { toast } from "sonner";
+import { useAuth } from "@clerk/nextjs";
 
 const availableModels = [
   { modelName: "dall-e-3", modelDescription: "DALL-E 3" },
@@ -52,10 +54,12 @@ export default function ImageGenPage() {
   const [selectedModel, setSelectedModel] = useState<string>("dall-e-3");
   const router = useRouter();
   const userImages = useQuery(api.image.listUserGeneratedImageRecord);
-  const createUserImageRecord = useMutation(
-    api.image.createUserGeneratedImageRecord,
-  );
+  const createUserImageRecord = useMutation(api.image.createUserGeneratedImageRecord);
   const generateImage = useAction(api.image.generateImageAction);
+
+  if(!useAuth().isSignedIn){
+    router.push("/")
+  }
 
   const handleGenerateImage = async (
     values: z.infer<typeof messageFormSchema>,
@@ -73,7 +77,7 @@ export default function ImageGenPage() {
       });
 
     } catch (error) {
-      console.error("Failed to generate image:", error);
+      toast.error("Failed to create image please try again later.");
     }
   };
 
@@ -107,7 +111,7 @@ export default function ImageGenPage() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
-      console.error("Failed to download image:", error);
+      toast.error("Failed to download please try again later.");
     }
   };
 

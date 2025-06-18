@@ -131,7 +131,7 @@ export default function Home() {
         <div className="text-center bg-muted rounded-2xl p-12 border">
           <h2 className="text-3xl font-bold mb-4 text-foreground">Ready to get started?</h2>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of users who are already experiencing the future of AI-powered conversations and creativity.
+            Join tens of users who are already experiencing the future of AI-powered conversations and creativity.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/chat">

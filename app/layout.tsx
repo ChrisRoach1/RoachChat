@@ -4,6 +4,7 @@ import "./globals.css";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ReactScan } from "@/components/react-scan";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,9 +39,16 @@ export default function RootLayout({
       >
         <ClerkProvider dynamic>
           <ConvexClientProvider>
-          <ReactScan />
-
+          {/* <ReactScan /> */}
             {children}
+            <Toaster
+                    toastOptions={{
+                        unstyled: false,
+                        classNames:{
+                            error: '!bg-destructive !text-white',
+                            success: '!bg-primary !text-primary-foreground'
+                        }
+                     }} />
           </ConvexClientProvider>
         </ClerkProvider>
       </body>
