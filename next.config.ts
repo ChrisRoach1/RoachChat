@@ -10,6 +10,13 @@ const nextConfig: NextConfig = {
         pathname: '/api/storage/**',
         search: '',
       },
+      {
+        protocol: 'https',
+        hostname: 'intent-wombat-252.convex.cloud',
+        port: '',
+        pathname: '/api/storage/**',
+        search: '',
+      },      
     ],
   },
   transpilePackages: ['@lobehub/icons']
