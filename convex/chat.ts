@@ -46,7 +46,7 @@ export const getThreadModelPreference = query({
     const modelPrefs = await ctx.db
       .query("threadModelPreference").withIndex("by_threadId", (q) => q.eq("threadId", args.threadId)).first();
       
-    return modelPrefs?.modelName || "clause4Sonnet"; 
+    return modelPrefs?.modelName || "claude4Sonnet"; 
   }
 });
 
