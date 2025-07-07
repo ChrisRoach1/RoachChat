@@ -9,6 +9,10 @@ import {
   Loader2,
   ArrowLeft,
   Sparkles,
+  Globe,
+  Lock,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -56,6 +60,7 @@ export default function ImageGenPage() {
   const userImages = useQuery(api.image.listUserGeneratedImageRecord);
   const createUserImageRecord = useMutation(api.image.createUserGeneratedImageRecord);
   const generateImage = useAction(api.image.generateImageAction);
+  const toggleImagePublicStatus = useMutation(api.image.toggleImagePublicStatus);
 
   if(!useAuth().isSignedIn){
     router.push("/")
@@ -69,7 +74,7 @@ export default function ImageGenPage() {
     try {
       const tempPromptValue = values.message;
       form.reset();
-      const recordId = await createUserImageRecord({ prompt: tempPromptValue });
+      const recordId = await createUserImageRecord({ prompt: tempPromptValue, isPublic: false });
       await generateImage({
         modelName: selectedModel,
         prompt: tempPromptValue,
@@ -78,6 +83,22 @@ export default function ImageGenPage() {
 
     } catch {
       toast.error("Failed to create image please try again later.");
+    }
+  };
+
+  const handleTogglePublic = async (imageId: string, currentStatus: boolean) => {
+    try {
+      await toggleImagePublicStatus({
+        imageId: imageId as Parameters<typeof toggleImagePublicStatus>[0]['imageId'],
+        isPublic: !currentStatus,
+      });
+      toast.success(
+        !currentStatus 
+          ? "Image is now public" 
+          : "Image is now private"
+      );
+    } catch {
+      toast.error("Failed to update image visibility");
     }
   };
 
@@ -282,8 +303,44 @@ export default function ImageGenPage() {
                           >
                             <Download className="h-4 w-4" />
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleTogglePublic(image._id, image.isPublic ?? false)}
+                            className="bg-background/90 hover:bg-background"
+                          >
+                            {image.isPublic ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
                         </div>
                       )}
+
+                      {/* Public/Private Status Indicator */}
+                      <div className="absolute top-2 right-2">
+                        <Badge 
+                          variant={image.isPublic ? "default" : "secondary"}
+                          className={`flex items-center gap-1 text-xs ${
+                            image.isPublic 
+                              ? "bg-green-500/90 hover:bg-green-500 text-white" 
+                              : "bg-muted/90 hover:bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {image.isPublic ? (
+                            <>
+                              <Globe className="h-3 w-3" />
+                              Public
+                            </>
+                          ) : (
+                            <>
+                              <Lock className="h-3 w-3" />
+                              Private
+                            </>
+                          )}
+                        </Badge>
+                      </div>
                     </div>
                   </CardHeader>
 

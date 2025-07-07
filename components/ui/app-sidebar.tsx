@@ -372,6 +372,14 @@ export function AppSidebar({ setCurrentThreadId, currentThreadId }: props) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
 
+                <SidebarMenuItem key="image-showcase-button">
+                  <SidebarMenuButton asChild>
+                    <Button variant="link">
+                      <Link href={"/image-showcase"}>Image Showcase</Link>
+                    </Button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
                 <SidebarMenuItem key="new-chat-button">
                   <SidebarMenuButton asChild>
                     <Button

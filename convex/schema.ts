@@ -27,7 +27,8 @@ export default defineSchema({
     storageId: v.optional(v.string()),
     status: v.string(),
     imageUrl: v.optional(v.string()),
-    prompt: v.string()
+    prompt: v.string(),
+    isPublic: v.optional(v.boolean())
   }).index("by_userId", ["userId"]),
 
   userFolders: defineTable({

@@ -43,7 +43,8 @@ export const generateImageAction = action({
 
 export const createUserGeneratedImageRecord = mutation({
   args:{
-    prompt: v.string()
+    prompt: v.string(),
+    isPublic: v.boolean()
   },
   handler: async(ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -53,7 +54,7 @@ export const createUserGeneratedImageRecord = mutation({
 
     const userID = identity.tokenIdentifier.split('|')[1];
 
-    const record = await ctx.db.insert("userGeneratedImages", {userId: userID, storageId: undefined, status: "pending", prompt: args.prompt})
+    const record = await ctx.db.insert("userGeneratedImages", {userId: userID, storageId: undefined, status: "pending", prompt: args.prompt, isPublic: args.isPublic})
 
     return record
   },
@@ -90,4 +91,47 @@ export const listUserGeneratedImageRecord = query({
     return await ctx.db.query("userGeneratedImages").withIndex("by_userId", q => q.eq("userId", userID)).collect();
 
   },
+})
+
+export const toggleImagePublicStatus = mutation({
+  args: {
+    imageId: v.id("userGeneratedImages"),
+    isPublic: v.boolean()
+  },
+  handler: async(ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
+      throw new Error("Not authenticated");
+    }
+
+    const userID = identity.tokenIdentifier.split('|')[1];
+
+    // Verify the image belongs to the current user
+    const image = await ctx.db.get(args.imageId);
+    if (!image || image.userId !== userID) {
+      throw new Error("Image not found or not authorized");
+    }
+
+    // Update the isPublic status
+    await ctx.db.patch(args.imageId, { isPublic: args.isPublic });
+
+    return { success: true };
+  }
+})
+
+export const listPublicImages = query({
+  args: {},
+  handler: async (ctx) => {
+    // Get all images where isPublic is true and status is completed
+    return await ctx.db
+      .query("userGeneratedImages")
+      .filter(q => 
+        q.and(
+          q.eq(q.field("isPublic"), true),
+          q.eq(q.field("status"), "completed")
+        )
+      )
+      .order("desc")
+      .collect();
+  }
 })
