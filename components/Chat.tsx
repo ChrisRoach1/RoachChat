@@ -47,7 +47,6 @@ export default function Chat({ threadId }: { threadId: string }) {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isThinking, setIsThinking] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<string | undefined>("");
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showLimitAlert, setShowLimitAlert] = useState(false);
   const [isAtMessageLimit, setIsAtMessageLimit] = useState(false);
@@ -90,7 +89,6 @@ export default function Chat({ threadId }: { threadId: string }) {
   };
 
   useEffect(() => {
-    setSelectedModel(getThreadModelPreference);
     scrollToBottom();
   }, [getThreadModelPreference]);
 
@@ -112,7 +110,6 @@ export default function Chat({ threadId }: { threadId: string }) {
 
   const handleSelectedModel = async (modelName: string) => {
     if (modelName !== "") {
-      setSelectedModel(modelName);
       await updateThreadModelPreference({ threadId, modelName });
     }
   };
@@ -248,7 +245,7 @@ export default function Chat({ threadId }: { threadId: string }) {
               {/* Model Selector */}
               <div className="w-full sm:w-auto">
                 <Select
-                  value={selectedModel}
+                  value={getThreadModelPreference}
                   onValueChange={(value) => handleSelectedModel(value)}
                   disabled={isAtMessageLimit}
                 >
@@ -341,7 +338,7 @@ const MemoizedMessageItem = memo(function MessageItem({
         }`}
       >
         <div
-          className={`rounded-2xl px-4 py-3 shadow-sm transition-colors transition-shadow duration-200 min-w-0 ${
+          className={`rounded-2xl px-4 py-3 shadow-sm transition-shadow duration-200 min-w-0 ${
             message.message?.role === "user"
               ? "bg-primary text-primary-foreground ml-auto"
               : "bg-card border"
